@@ -1,0 +1,66 @@
+// Copyright (c) 2022，Horizon Robotics.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef BEV_INCLUDE_BEV_BEV_NODE_H_
+#define BEV_INCLUDE_BEV_BEV_NODE_H_
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "jsonutil.h"
+#include "ai_msgs/msg/perception_targets.hpp"
+#include "dnn_node/dnn_node.h"
+#include "dnn_node/util/image_proc.h"
+#include "preprocess.h"
+#include "postprocess/postprocess.h"
+
+namespace hobot {
+namespace bev {
+
+struct DNNNodeSampleOutput : public hobot::dnn_node::DnnNodeOutput {
+};
+
+// 继承DnnNode虚基类，创建算法推理节点
+class BevNode : public hobot::dnn_node::DnnNode {
+ public:
+  BevNode(const std::string& node_name = "bev_node",
+                const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+
+ protected:
+  // 实现基类的纯虚接口，用于配置Node参数
+  int SetNodePara() override;
+  // 实现基类的虚接口，将解析后结构化的算法输出数据封装成ROS Msg后发布
+  int PostProcess(const std::shared_ptr<hobot::dnn_node::DnnNodeOutput>&
+                      node_output) override;
+
+ private:
+  void RunSingleFeedInfer();
+
+  std::string config_file_ = "config/bev_ipm_base/bev_ipm_base_config.json";
+  std::string model_file_ = "config/model/model-c359f50c.hbm";
+  std::string pkg_path_ = ".";
+
+  std::shared_ptr<PreProcess> sp_preprocess_ = nullptr;
+  std::shared_ptr<BevPostProcess> sp_postprocess_ = nullptr;
+  
+  // 算法推理结果消息发布者
+  rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr msg_publisher_ =
+      nullptr;
+};  // class BevNode
+
+}  // namespace bev
+}  // namespace hobot
+
+#endif  // BEV_INCLUDE_BEV_BEV_NODE_H_

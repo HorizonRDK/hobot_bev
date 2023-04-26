@@ -1,0 +1,142 @@
+{
+    "predict": {
+        "pyramid_layer": 0,
+        "is_padding": false,
+        "model_input_width": 960,
+        "model_input_height": 512
+    },
+    "debug_performance": false,
+    "tensor_layout": "NCHW",
+    "postprocess": {
+        "outputtensors": {
+            "reg": [
+                1,
+                7,
+                13,
+                19,
+                25,
+                31
+            ],
+            "height": [
+                2,
+                8,
+                14,
+                20,
+                26,
+                32
+            ],
+            "dim": [
+                3,
+                9,
+                15,
+                21,
+                27,
+                33
+            ],
+            "rot": [
+                4,
+                10,
+                16,
+                22,
+                28,
+                34
+            ],
+            "vel": [
+                5,
+                11,
+                17,
+                23,
+                29,
+                35
+            ],
+            "heatmap": [
+                6,
+                12,
+                18,
+                24,
+                30,
+                36
+            ],
+            "segment": 0
+        },
+        "outputs": [
+            "3dbox",
+            "segment"
+        ],
+        "tasks": {
+            "car": [
+                "car"
+            ],
+            "truck": [
+                "truck",
+                "construction_vehicle"
+            ],
+            "bus": [
+                "bus",
+                "trailer"
+            ],
+            "barrier": [
+                "barrier"
+            ],
+            "bicycle": [
+                "motorcycle",
+                "bicycle"
+            ],
+            "pedestrian": [
+                "pedestrian",
+                "traffic_cone"
+            ]
+        },
+        "class_names": [
+            "car",
+            "truck",
+            "trailer",
+            "bus",
+            "construction_vehicle",
+            "bicycle",
+            "motorcycle",
+            "pedestrian",
+            "traffic_cone",
+            "barrier"
+        ],
+        "bev_size": [
+            51.2,
+            51.2,
+            0.8
+        ],
+        "segment_type": "S8",
+        "box_score_threshold": 0.4,
+        "nms_type": [
+            "rotate",
+            "rotate",
+            "rotate",
+            "circle",
+            "rotate",
+            "rotate"
+        ],
+        "min_radius": [
+            4,
+            12,
+            10,
+            1,
+            0.85,
+            0.175
+        ],
+        "nms_threshold": [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.5
+        ],
+        "top_k_max_size": 50,
+        "pre_max_size": 1000,
+        "nms_bbox": true,
+        "post_max_size": 100,
+        "basic_pyramid_image_height": 512,
+        "basic_pyramid_image_width": 960,
+        "src_image_height": 512,
+        "src_image_width": 960
+    }
+}
