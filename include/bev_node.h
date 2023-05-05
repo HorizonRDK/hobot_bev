@@ -25,14 +25,22 @@
 #include "dnn_node/util/image_proc.h"
 #include "preprocess.h"
 #include "postprocess/postprocess.h"
+#include "render.h"
 
 namespace hobot {
 namespace bev {
 
-struct DNNNodeSampleOutput : public hobot::dnn_node::DnnNodeOutput {
+struct BevNodeOutput : public hobot::dnn_node::DnnNodeOutput {
+  // size is 6 and seq is:
+  // image_front_left
+  // image_front
+  // image_front_right
+  // image_back_left
+  // image_back
+  // image_back_right
+  std::vector<std::string> image_files;
 };
 
-// 继承DnnNode虚基类，创建算法推理节点
 class BevNode : public hobot::dnn_node::DnnNode {
  public:
   BevNode(const std::string& node_name = "bev_node",
@@ -51,6 +59,14 @@ class BevNode : public hobot::dnn_node::DnnNode {
   std::string config_file_ = "config/bev_ipm_base/bev_ipm_base_config.json";
   std::string model_file_ = "config/model/model-c359f50c.hbm";
   std::string pkg_path_ = ".";
+  std::vector<std::string> image_files{
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_FRONT_LEFT__1535639705754799.jpg",
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_FRONT__1535639706262404.jpg",
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_FRONT_RIGHT__1535639706770482.jpg",
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_BACK_LEFT__1535639706797405.jpg",
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_BACK__1535639706787558.jpg",
+    "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_BACK_RIGHT__1535639706778113.jpg"
+  };
 
   std::shared_ptr<PreProcess> sp_preprocess_ = nullptr;
   std::shared_ptr<BevPostProcess> sp_postprocess_ = nullptr;
@@ -58,6 +74,8 @@ class BevNode : public hobot::dnn_node::DnnNode {
   // 算法推理结果消息发布者
   rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr msg_publisher_ =
       nullptr;
+
+  std::shared_ptr<BevRender> sp_bev_render_ = nullptr;
 };  // class BevNode
 
 }  // namespace bev

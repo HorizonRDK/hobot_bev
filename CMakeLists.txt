@@ -12,7 +12,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -ggdb)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # find dependencies
@@ -22,8 +22,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(ai_msgs REQUIRED)
 find_package(dnn_node REQUIRED)
 
-# x3|j5|x86
-set(PREFIX_PATH x3)
+# j5|x86
+set(PREFIX_PATH j5)
 set(SYS_ROOT ${CMAKE_SYSROOT})
 
 if(PLATFORM_X3)
@@ -63,6 +63,7 @@ link_directories(
 
 include_directories(
   include
+  ${PROJECT_SOURCE_DIR}
   ${SYS_ROOT}/usr/include
 )
 
@@ -73,6 +74,7 @@ add_executable(${PROJECT_NAME}
   src/postprocess/postprocess.cpp
   src/postprocess/detect_3dbox_postprocess.cpp
   src/postprocess/segment_postprocess.cpp
+  src/render.cpp
 )
 
 ament_target_dependencies(

@@ -31,7 +31,6 @@
 #define ALIGN_16(w) ALIGNED_2E(w, 16U)
 
 namespace hobot {
-
 namespace bev {
 
 using hobot::dnn_node::DNNInput;

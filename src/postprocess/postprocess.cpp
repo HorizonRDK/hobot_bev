@@ -55,7 +55,7 @@ int BevPostProcess::InitPostProcessInfo(const std::string &config_file) {
 
 void BevPostProcess::OutputsPostProcess(
     std::vector<std::shared_ptr<DNNTensor>> &tensors,
-    std::shared_ptr<DnnParserResult>& result) {
+    std::shared_ptr<HobotBevData>& result) {
   if (tensors.empty()) {
     return;
   }

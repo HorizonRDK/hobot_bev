@@ -30,7 +30,7 @@ class SegmentPostProcess : public DetectBasePostProcess {
  public:
   explicit SegmentPostProcess(const std::string &config_file);
   void Parse(std::vector<std::shared_ptr<DNNTensor>> &tensors,
-    std::shared_ptr<DnnParserResult>& result) override;
+    std::shared_ptr<HobotBevData>& result) override;
 
  private:
   int InitPostProcessInfo(const std::string &config_file);

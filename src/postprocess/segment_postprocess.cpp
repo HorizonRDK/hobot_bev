@@ -65,8 +65,14 @@ int SegmentPostProcess::InitPostProcessInfo(const std::string &config_file) {
 }
 
 void SegmentPostProcess::Parse(std::vector<std::shared_ptr<DNNTensor>> &tensors,
-    std::shared_ptr<DnnParserResult>& result) {
+    std::shared_ptr<HobotBevData>& result) {
   if (segment_index_ < 0) {
+    return;
+  }
+
+  if (!result) {
+    RCLCPP_ERROR(rclcpp::get_logger("bev_det_seg"),
+                "Invalid dnn parser result!");
     return;
   }
 
@@ -116,10 +122,6 @@ void SegmentPostProcess::Parse(std::vector<std::shared_ptr<DNNTensor>> &tensors,
       printf("not support output layout\n");
   }
 
-  if (result) {
-    // TODO add data to result
-  }
-
 #if 0
   std::stringstream ss;
   ss << shape_h << " " << shape_w << "\n";
@@ -143,6 +145,43 @@ void SegmentPostProcess::Parse(std::vector<std::shared_ptr<DNNTensor>> &tensors,
   std::ofstream ofs("ofs_seg_tros.txt");
   ofs << ss.str();
 #endif
+
+
+  auto& seg = result->seg;
+  float* data = reinterpret_cast<float*>(tensors[0]->sysMem[0].virAddr);
+  seg.data.resize(shape_w * shape_h);
+  seg.valid_w = shape_w;
+  seg.valid_h = shape_h;
+
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("bev_det_seg"),
+              "shape_w: " << shape_w
+              << ", shape_h " << shape_w
+              << ", aligned_shape_w: " << aligned_shape_w
+              << ", aligned_shape_h： " << aligned_shape_h);
+
+  int mask_value_idx = 0;
+  int data_val_idx = 0;
+  for (int h = 0; h < shape_h; h++) {
+    for (int w = 0; w < shape_w; w++) {
+      mask_value_idx = h * aligned_shape_w + w;
+      auto v = cls_data_8[mask_value_idx];
+      if (v < 0 || v > 4) {
+        RCLCPP_ERROR(rclcpp::get_logger("bev_det_seg"),
+                    "error seg value: %d", v);
+      }
+
+      if (seg_type_ == seg_Type::S8) {
+        seg.data[data_val_idx] = cls_data_8[mask_value_idx];
+      } else if (seg_type_ == seg_Type::S64) {
+        seg.data[data_val_idx] = cls_data_64[mask_value_idx];
+      } else {
+        RCLCPP_ERROR(rclcpp::get_logger("bev_det_seg"),
+                    "do not support type!");
+      }
+      data_val_idx++;
+    }
+  }
+
 }
 void SegmentPostProcess::ArgMaxChannel(const int &channel,
                                        const std::vector<float> &vec_data_seg,

@@ -135,9 +135,11 @@ int Detect3dBoxPostProcess::InitPostProcessInfo(
 
 void Detect3dBoxPostProcess::Parse(
     std::vector<std::shared_ptr<DNNTensor>> &tensors,
-    std::shared_ptr<DnnParserResult>& result) {
-  if (result) {
-    // TODO add data to result
+    std::shared_ptr<HobotBevData>& result) {
+  if (!result) {
+    RCLCPP_ERROR(rclcpp::get_logger("bev_det_3dbox"),
+                "Invalid dnn parser result!");
+    return;
   }
 
   std::stringstream ss;
@@ -151,7 +153,16 @@ void Detect3dBoxPostProcess::Parse(
         tensors[map_tasks_.size() * i + 6], bbox3d);
 
     ResultNms(i, bbox3d);
-    for (const auto& bbox : bbox3d) {
+    for (auto& bbox : bbox3d) {
+      std::string cls = "";
+      if (bbox.cls < class_names_.size()) {
+        cls = class_names_.at(bbox.cls);
+        bbox.cls_str = cls;
+      } else {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("bev_det_3dbox"),
+          "bbox.cls idx " << bbox.cls << " exceeds class name len " << class_names_.size());
+      }
+
       ss << "task: " << i << " bbox:"
         << " " << bbox.score
         << " " << bbox.cls
@@ -164,10 +175,12 @@ void Detect3dBoxPostProcess::Parse(
         << " " << bbox.r
         << "\n";
     }
+  
+    result->bbox3ds.emplace_back(bbox3d);
   }
   printf("%s\n", ss.str().data());
-  std::ofstream ofs("ofs.txt");
-  ofs << ss.str();
+  // std::ofstream ofs("ofs_box_tros.txt");
+  // ofs << ss.str();
 }
 
 void Detect3dBoxPostProcess::DecodeTask(

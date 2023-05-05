@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "detect_base_postprocess.h"
+#include "bev_data.h"
 
 namespace hobot {
 namespace bev {
@@ -26,7 +27,7 @@ class BevPostProcess {
  public:
   explicit BevPostProcess(const std::string &config_file);
   void OutputsPostProcess(std::vector<std::shared_ptr<DNNTensor>> &tensors,
-  std::shared_ptr<DnnParserResult>& result);
+  std::shared_ptr<HobotBevData>& result);
 
  private:
   int InitPostProcessInfo(const std::string &config_file);

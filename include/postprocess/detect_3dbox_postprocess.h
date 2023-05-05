@@ -25,33 +25,9 @@ namespace bev {
 
 class Detect3dBoxPostProcess : public DetectBasePostProcess {
  public:
-  struct Bbox2D {
-    float x1, y1, x2, y2;
-    float score;
-    uint32_t cls;
-    inline static bool greater(const Bbox2D &a, const Bbox2D &b) {
-      return a.score > b.score;
-    }
-  };
-  struct Bbox3D {
-    float score = 0.0;
-    uint16_t cls = 0;
-    float x = 0.0;
-    float y = 0.0;
-    float z = 0.0;
-    float w = 0.0;
-    float l = 0.0;
-    float h = 0.0;
-    float r = 0.0;
-    std::vector<std::vector<float>> corners3d;  // undistort, camera ord
-    inline static bool greater(const Bbox3D &a, const Bbox3D &b) {
-      return a.score > b.score;
-    }
-    Bbox3D() { corners3d.resize(8, std::vector<float>(3)); }
-  };
   explicit Detect3dBoxPostProcess(const std::string &config_file);
   void Parse(std::vector<std::shared_ptr<DNNTensor>> &tensors,
-    std::shared_ptr<DnnParserResult>& result) override;
+    std::shared_ptr<HobotBevData>& result) override;
 
  private:
   int InitPostProcessInfo(const std::string &config_file);

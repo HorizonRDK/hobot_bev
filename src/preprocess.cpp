@@ -16,7 +16,6 @@
 #include "jsonutil.h"
 
 namespace hobot {
-
 namespace bev {
 
 PreProcess::PreProcess(const std::string &config_file) {
@@ -47,7 +46,8 @@ int PreProcess::CvtData2Tensors(
   if (!pmodel || !sp_feedback_data ||
       sp_feedback_data->image_files.size() != 6 ||
       sp_feedback_data->image_files.size() != sp_feedback_data->points_files.size() ||
-      sp_feedback_data->image_files.size() + sp_feedback_data->points_files.size() != pmodel->GetInputCount()) {
+      sp_feedback_data->image_files.size() + sp_feedback_data->points_files.size() !=
+      static_cast<size_t>(pmodel->GetInputCount())) {
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_bev"), "Invalid input data");
     return -1;
   }

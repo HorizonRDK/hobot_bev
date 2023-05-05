@@ -47,6 +47,8 @@ BevNode::BevNode(const std::string& node_name,
   msg_publisher_ = this->create_publisher<ai_msgs::msg::PerceptionTargets>(
       "/bev_node", 10);
 
+  sp_bev_render_ = std::make_shared<BevRender>();
+
   RunSingleFeedInfer();
 }
 
@@ -90,9 +92,9 @@ int BevNode::PostProcess(
       results;
 
   // 3.2 开始解析
-  std::shared_ptr<DnnParserResult> det_result = std::make_shared<DnnParserResult>();
+  std::shared_ptr<HobotBevData> det_result = std::make_shared<HobotBevData>();
   sp_postprocess_->OutputsPostProcess(node_output->output_tensors, det_result);
-
+  
   if (node_output->rt_stat) {
     auto tp_now = std::chrono::system_clock::now();
     auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -103,6 +105,16 @@ int BevNode::PostProcess(
                 "post process time ms: %d",
                 node_output->rt_stat->infer_time_ms,
                 interval);
+  }
+  
+  auto sp_bev_node_out = std::dynamic_pointer_cast<BevNodeOutput>(node_output);
+  if (sp_bev_node_out) {
+    RCLCPP_INFO(rclcpp::get_logger("bev_node"),
+                "Render start");
+    sp_bev_render_->Render(sp_bev_node_out->image_files, det_result);
+  } else {
+    RCLCPP_ERROR(rclcpp::get_logger("bev_node"),
+                "Pointer cast fail");
   }
 
 #if 0
@@ -145,31 +157,9 @@ void BevNode::RunSingleFeedInfer() {
   }
  
   auto sp_feedback_data = std::make_shared<FeedbackData>();
-  auto image_back = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_BACK/"
-      "n008-2018-08-01-15-16-36-0400__CAM_BACK__1533151606037558.jpg";
-  auto image_back_left = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_BACK_LEFT/"
-      "n008-2018-08-01-15-16-36-0400__CAM_BACK_LEFT__1533151606047405.jpg";
-  auto image_back_right = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_BACK_RIGHT/"
-      "n008-2018-08-01-15-16-36-0400__CAM_BACK_RIGHT__1533151606028113.jpg";
-  auto image_front = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_FRONT/"
-      "n008-2018-08-01-15-16-36-0400__CAM_FRONT__1533151606012404.jpg";
-  auto image_front_left = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_FRONT_LEFT/"
-      "n008-2018-08-01-15-16-36-0400__CAM_FRONT_LEFT__1533151606004803.jpg";
-  auto image_front_right = pkg_path_ + "/" +
-      "config/bev_ipm_base/bev_test_imgs/CAM_FRONT_RIGHT/"
-      "n008-2018-08-01-15-16-36-0400__CAM_FRONT_RIGHT__1533151606020482.jpg";
-      
-  sp_feedback_data->image_files.push_back(image_front_left);
-  sp_feedback_data->image_files.push_back(image_front);
-  sp_feedback_data->image_files.push_back(image_front_right);
-  sp_feedback_data->image_files.push_back(image_back_left);
-  sp_feedback_data->image_files.push_back(image_back);
-  sp_feedback_data->image_files.push_back(image_back_right);
+  for (const auto& image_file: image_files) {
+    sp_feedback_data->image_files.push_back(pkg_path_ + "/" + image_file);
+  }
 
   for (auto i = 0; i < 6; i++) {
     sp_feedback_data->points_files.push_back(pkg_path_ + "/" + "config/bev_ipm_base/" + std::to_string(i) + ".bin");
@@ -184,8 +174,9 @@ void BevNode::RunSingleFeedInfer() {
   // sp_preprocess_->FreeTensors(input_tensors);
 
   std::vector<std::shared_ptr<hobot::dnn_node::OutputDescription>> output_descs{};
-  auto dnn_output = std::make_shared<DNNNodeSampleOutput>();
+  auto dnn_output = std::make_shared<BevNodeOutput>();
   dnn_output->msg_header = std::make_shared<std_msgs::msg::Header>();
+  dnn_output->image_files = sp_feedback_data->image_files;
   if (Run(input_tensors, output_descs, dnn_output, true, -1, -1) < 0) {
     RCLCPP_INFO(rclcpp::get_logger("bev_node"), "Run infer fail!");
   }
