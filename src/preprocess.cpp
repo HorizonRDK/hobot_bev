@@ -216,7 +216,7 @@ std::shared_ptr<DNNTensor> PreProcess::GetNV12Pyramid(const std::string &image_f
   return std::shared_ptr<DNNTensor>(
       input_tensor, [y, uv](DNNTensor *input_tensor) {
         // Release memory after deletion
-        std::cout << "Release input_tensor" << std::endl;
+        // std::cout << "Release input_tensor" << std::endl;
         hbSysFreeMem(y);
         hbSysFreeMem(uv);
         delete y;

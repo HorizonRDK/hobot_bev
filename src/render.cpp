@@ -26,13 +26,14 @@ namespace bev {
 
 int BevRender::Render(
     const std::vector<std::string>& image_files,
-    const std::shared_ptr<HobotBevData>& det_result) {
+    const std::shared_ptr<HobotBevData>& det_result,
+    cv::Mat& mat_bg) {
   if (image_files.empty() || !det_result) return -1;
 
   int scaled_img_width = std::max(render_para.ipm_seg_size_w, render_para.ipm_bev_size_w);
   int scaled_img_height = std::max(render_para.ipm_seg_size_h, render_para.ipm_bev_size_h);
 
-  cv::Mat mat_bg(scaled_img_height * render_para.layout_h_num,
+  mat_bg = cv::Mat(scaled_img_height * render_para.layout_h_num,
     scaled_img_width * render_para.layout_w_num, CV_8UC3, cv::Scalar::all(0));
 
   int copy_offset_w = 0;
@@ -136,6 +137,14 @@ int BevRender::Render(
     //             saving_path.c_str());
     // cv::imwrite(saving_path, mat_bgr_box);
   }
+
+  // 逆时针旋转90°使检测框渲染图片的上方是车辆前进方向
+  // 顺时针90°旋转: transpose + flip(tmp,dst,1)
+  // 逆时针90°旋转:transpose + flip(tmp,dst,0)
+  // 180°旋转: flip(src,dst,-1)
+	cv::Mat temp;
+	cv::transpose(mat_bgr_box, temp);
+	cv::flip(temp, mat_bgr_box, 0);
 
   // render seg
   cv::Mat mat_bgr_seg(render_para.ipm_seg_size_h, render_para.ipm_seg_size_w, CV_8UC3, cv::Scalar(255, 255, 255));
@@ -289,11 +298,12 @@ int BevRender::Render(
     }
   }
 
-  std::string saving_path = "render_all.jpeg";
-  RCLCPP_WARN(rclcpp::get_logger("BevRender"),
-              "Draw result to file: %s",
-              saving_path.c_str());
-  cv::imwrite(saving_path, mat_bg);
+  // static int count = 0;
+  // std::string saving_path = "render_bev_" + std::to_string(count++) + ".jpeg";
+  // RCLCPP_WARN(rclcpp::get_logger("BevRender"),
+  //             "Draw result to file: %s",
+  //             saving_path.c_str());
+  // cv::imwrite(saving_path, mat_bg);
 
   return 0;
 }

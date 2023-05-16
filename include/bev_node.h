@@ -55,10 +55,13 @@ class BevNode : public hobot::dnn_node::DnnNode {
 
  private:
   void RunSingleFeedInfer();
+  void RunBatchFeedInfer();
 
   std::string config_file_ = "config/bev_ipm_base/bev_ipm_base_config.json";
   std::string model_file_ = "config/model/model-c359f50c.hbm";
   std::string pkg_path_ = ".";
+
+  // single feed imgs
   std::vector<std::string> image_files{
     "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_FRONT_LEFT__1535639705754799.jpg",
     "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_FRONT__1535639706262404.jpg",
@@ -68,14 +71,32 @@ class BevNode : public hobot::dnn_node::DnnNode {
     "config/bev_ipm_base/bev_test_imgs/n008-2018-08-30-10-33-52-0400__CAM_BACK_RIGHT__1535639706778113.jpg"
   };
 
+  // batch feed img lists
+  // The image path = image_pre_path_ + path in list
+  std::string image_pre_path_ = "./data/";
+  std::vector<std::string> image_lists{
+    "config/bev_ipm_base/bev_test_img_lists/cam_front_left.list",  
+    "config/bev_ipm_base/bev_test_img_lists/cam_front.list",
+    "config/bev_ipm_base/bev_test_img_lists/cam_front_right.list",
+    "config/bev_ipm_base/bev_test_img_lists/cam_back_left.list", 
+    "config/bev_ipm_base/bev_test_img_lists/cam_back.list",      
+    "config/bev_ipm_base/bev_test_img_lists/cam_back_right.list"  
+  };
+
   std::shared_ptr<PreProcess> sp_preprocess_ = nullptr;
   std::shared_ptr<BevPostProcess> sp_postprocess_ = nullptr;
   
   // 算法推理结果消息发布者
   rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr msg_publisher_ =
       nullptr;
+  //用于ros方式发布图片
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr ros_publisher_ =
+      nullptr;
+  std::string msg_pub_topic_name_ = "/image_jpeg";
 
   std::shared_ptr<BevRender> sp_bev_render_ = nullptr;
+
+  int model_in_img_size_ = 6;
 };  // class BevNode
 
 }  // namespace bev

@@ -38,6 +38,9 @@ def generate_launch_description():
     model_file_launch_arg = DeclareLaunchArgument(
         "model_file", default_value=TextSubstitution(text=pkg_path+"/config/model/model-c359f50c.hbm")
     )
+    image_pre_path_launch_arg = DeclareLaunchArgument(
+        "image_pre_path", default_value=TextSubstitution(text=pkg_path+"./data/")
+    )
 
     hobot_bev_node = Node(
         package='hobot_bev',
@@ -46,13 +49,28 @@ def generate_launch_description():
         parameters=[
             {"pkg_path": pkg_path},
             {"config_file": LaunchConfiguration('config_file')},
-            {"model_file": LaunchConfiguration('model_file')}
+            {"model_file": LaunchConfiguration('model_file')},
+            {"image_pre_path": LaunchConfiguration('image_pre_path')}
         ],
-        arguments=['--ros-args', '--log-level', 'info']
+        arguments=['--ros-args', '--log-level', 'warn']
     )
 
+    hobot_web_node = Node(
+        package='websocket',
+        executable='websocket',
+        output='screen',
+        parameters=[
+            {"image_topic": "/image_jpeg"},
+            {"image_type": "mjpeg"},
+            {"only_show_image": True}
+        ],
+        arguments=['--ros-args', '--log-level', 'warn']
+    )
+    
     return LaunchDescription([
         config_file_launch_arg,
         model_file_launch_arg,
-        hobot_bev_node
+        image_pre_path_launch_arg,
+        hobot_bev_node,
+        hobot_web_node
     ])

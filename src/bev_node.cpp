@@ -26,15 +26,18 @@ BevNode::BevNode(const std::string& node_name,
   this->declare_parameter<std::string>("config_file", config_file_);
   this->declare_parameter<std::string>("model_file", model_file_);
   this->declare_parameter<std::string>("pkg_path", pkg_path_);
+  this->declare_parameter<std::string>("image_pre_path", image_pre_path_);
 
   this->get_parameter<std::string>("config_file", config_file_);
   this->get_parameter<std::string>("model_file", model_file_);
   this->get_parameter<std::string>("pkg_path", pkg_path_);
+  this->get_parameter<std::string>("image_pre_path", image_pre_path_);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("bev_node"),
     "\n config_file: " << config_file_
     << "\n model_file: " << model_file_
-    << "\n pkg_path: " << pkg_path_);
+    << "\n pkg_path: " << pkg_path_
+    << "\n image_pre_path: " << image_pre_path_);
 
   // Init中使用DNNNodeSample子类实现的SetNodePara()方法进行算法推理的初始化
   if (Init() != 0) {
@@ -47,9 +50,13 @@ BevNode::BevNode(const std::string& node_name,
   msg_publisher_ = this->create_publisher<ai_msgs::msg::PerceptionTargets>(
       "/bev_node", 10);
 
+  ros_publisher_ =
+      this->create_publisher<sensor_msgs::msg::Image>(msg_pub_topic_name_, 10);
+      
   sp_bev_render_ = std::make_shared<BevRender>();
 
-  RunSingleFeedInfer();
+  // RunSingleFeedInfer();
+  RunBatchFeedInfer();
 }
 
 int BevNode::SetNodePara() {
@@ -63,6 +70,7 @@ int BevNode::SetNodePara() {
   }
 
   dnn_node_para_ptr_->model_file = model_file_;
+  dnn_node_para_ptr_->task_num = 4;
   sp_preprocess_ = std::make_shared<PreProcess>(config_file_);
   sp_postprocess_ = std::make_shared<BevPostProcess>(config_file_);
   
@@ -101,8 +109,10 @@ int BevNode::PostProcess(
                         tp_now - tp_start)
                         .count();
     RCLCPP_WARN(rclcpp::get_logger("bev_node"),
-                "infer time ms: %d, "
+                "input fps: %.2f, out fps: %.2f, infer time ms: %d, "
                 "post process time ms: %d",
+                node_output->rt_stat->input_fps,
+                node_output->rt_stat->output_fps,
                 node_output->rt_stat->infer_time_ms,
                 interval);
   }
@@ -111,7 +121,26 @@ int BevNode::PostProcess(
   if (sp_bev_node_out) {
     RCLCPP_INFO(rclcpp::get_logger("bev_node"),
                 "Render start");
-    sp_bev_render_->Render(sp_bev_node_out->image_files, det_result);
+    cv::Mat mat_bg;
+    sp_bev_render_->Render(sp_bev_node_out->image_files, det_result, mat_bg);
+
+    auto msg = sensor_msgs::msg::Image();
+    msg.height = mat_bg.rows;
+    msg.width = mat_bg.cols;
+    msg.encoding = "jpeg";
+    
+    // 使用opencv的imencode接口将mat转成vector，获取图片size
+    std::vector<int> param;
+    std::vector<uint8_t> jpeg;
+    imencode(".jpg", mat_bg, jpeg, param);
+    int32_t data_len = jpeg.size();
+    msg.data.resize(data_len);
+    memcpy(&msg.data[0], jpeg.data(), data_len);
+    struct timespec time_start = {0, 0};
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    msg.header.stamp.sec = time_start.tv_sec;
+    msg.header.stamp.nanosec = time_start.tv_nsec;
+    ros_publisher_->publish(msg);
   } else {
     RCLCPP_ERROR(rclcpp::get_logger("bev_node"),
                 "Pointer cast fail");
@@ -180,6 +209,92 @@ void BevNode::RunSingleFeedInfer() {
   if (Run(input_tensors, output_descs, dnn_output, true, -1, -1) < 0) {
     RCLCPP_INFO(rclcpp::get_logger("bev_node"), "Run infer fail!");
   }
+}
+
+void BevNode::RunBatchFeedInfer() {
+  auto model = GetModel();
+  if (!model) {
+    RCLCPP_ERROR(rclcpp::get_logger("bev_node"), "Invalid model!");
+    rclcpp::shutdown();
+    return;
+  }
+
+  if (image_lists.size() != model_in_img_size_) {
+    RCLCPP_ERROR(rclcpp::get_logger("bev_node"),
+      "image_lists.size %d is unmatch with needed %d",
+      image_lists.size(), model_in_img_size_);
+    rclcpp::shutdown();
+    return;
+  }
+ 
+  std::vector<std::vector<std::string>> image_source_lists;
+  for (const auto& image_list : image_lists) {
+    std::ifstream ifs(pkg_path_ + "/" + image_list);
+    if (!ifs.good()) {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("bev_node"), "Open file failed: " << image_list);
+      rclcpp::shutdown();
+      return;
+    }
+
+    std::vector<std::string> image_source_list;
+    std::string image_path;
+    while (std::getline(ifs, image_path)) {
+      std::string img_name = image_pre_path_ + "/" + image_path;
+      if (access(img_name.c_str(), F_OK) != 0) {
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_bev"), "File is not exist! img_name: " << img_name);
+        rclcpp::shutdown();
+        return;
+      }
+      image_source_list.push_back(img_name);
+    }
+    image_source_lists.emplace_back(image_source_list);
+    ifs.close();
+  }
+  
+  int min_img_num = image_source_lists.at(0).size();
+  for (size_t idx = 0; idx < image_lists.size(); idx++) {
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("bev_node"),
+    "image_list " << pkg_path_ + "/" + image_lists.at(idx) << " has imgs len " << image_source_lists.at(idx).size());
+    if (min_img_num > image_source_lists.at(idx).size()) {
+      min_img_num = image_source_lists.at(idx).size();
+    }
+  }
+
+  for (int img_idx = 0; img_idx < min_img_num; img_idx++) {
+    if (!rclcpp::ok()) {
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("bev_node"),
+      "Exit batch feedback loop.");
+      break;
+    }
+    
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("bev_node"),
+    "loop " << img_idx << "/" << min_img_num);
+
+    auto sp_feedback_data = std::make_shared<FeedbackData>();
+    for (size_t grp_idx = 0; grp_idx < model_in_img_size_; grp_idx++) {
+      std::string img_name = image_source_lists.at(grp_idx).at(img_idx);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("bev_node"),
+        "img_idx " << img_idx << ", grp_idx " << grp_idx << ", img_name " << img_name);
+      sp_feedback_data->image_files.emplace_back(img_name);
+    }
+    
+    for (auto i = 0; i < model_in_img_size_; i++) {
+      sp_feedback_data->points_files.push_back(pkg_path_ + "/" + "config/bev_ipm_base/" + std::to_string(i) + ".bin");
+    }
+
+    std::vector<std::shared_ptr<DNNTensor>> input_tensors;
+    sp_preprocess_->CvtData2Tensors(input_tensors, model, sp_feedback_data);
+
+    std::vector<std::shared_ptr<hobot::dnn_node::OutputDescription>> output_descs{};
+    auto dnn_output = std::make_shared<BevNodeOutput>();
+    dnn_output->msg_header = std::make_shared<std_msgs::msg::Header>();
+    dnn_output->image_files = sp_feedback_data->image_files;
+    if (Run(input_tensors, output_descs, dnn_output, false, -1, -1) < 0) {
+      RCLCPP_INFO(rclcpp::get_logger("bev_node"), "Run infer fail!");
+    }
+  }
+  rclcpp::shutdown();
+  return;
 }
 
 }  // namespace bev

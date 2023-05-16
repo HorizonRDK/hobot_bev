@@ -142,7 +142,7 @@ void Detect3dBoxPostProcess::Parse(
     return;
   }
 
-  std::stringstream ss;
+  // std::stringstream ss;
   for (size_t i = 0; i < map_tasks_.size(); i++) {
     std::vector<Bbox3D> bbox3d;
     // test all+1
@@ -163,22 +163,22 @@ void Detect3dBoxPostProcess::Parse(
           "bbox.cls idx " << bbox.cls << " exceeds class name len " << class_names_.size());
       }
 
-      ss << "task: " << i << " bbox:"
-        << " " << bbox.score
-        << " " << bbox.cls
-        << " " << bbox.x
-        << " " << bbox.y
-        << " " << bbox.z
-        << " " << bbox.w
-        << " " << bbox.l
-        << " " << bbox.h
-        << " " << bbox.r
-        << "\n";
+      // ss << "task: " << i << " bbox:"
+      //   << " " << bbox.score
+      //   << " " << bbox.cls
+      //   << " " << bbox.x
+      //   << " " << bbox.y
+      //   << " " << bbox.z
+      //   << " " << bbox.w
+      //   << " " << bbox.l
+      //   << " " << bbox.h
+      //   << " " << bbox.r
+      //   << "\n";
     }
   
     result->bbox3ds.emplace_back(bbox3d);
   }
-  printf("%s\n", ss.str().data());
+  // printf("%s\n", ss.str().data());
   // std::ofstream ofs("ofs_box_tros.txt");
   // ofs << ss.str();
 }

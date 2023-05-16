@@ -92,7 +92,8 @@ class BevRender {
  public:
   int Render(
     const std::vector<std::string>& image_files,
-    const std::shared_ptr<HobotBevData>& det_result);
+    const std::shared_ptr<HobotBevData>& det_result,
+    cv::Mat& mat_bg);
 
  private:
   RenderPara render_para;

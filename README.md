@@ -49,17 +49,46 @@ Getting Started with Hobot Bev Node
 
 # 使用介绍
 
+## 参数
+
+  this->declare_parameter<std::string>("config_file", config_file_);
+  this->declare_parameter<std::string>("model_file", model_file_);
+  this->declare_parameter<std::string>("pkg_path", pkg_path_);
+  this->declare_parameter<std::string>("image_pre_path", image_pre_path_);
+
+
+| 字段 | 类型 | 描述 | 默认值 |
+| ---- | ---- | ---- | ---- |
+| config_file | string | 配置文件路径 | "config/bev_ipm_base/bev_ipm_base_config.json" |
+| model_file | string | 模型文件路径 | "config/model/model-c359f50c.hbm" |
+| pkg_path | string | pkg安装路径 | launch脚本中自动获取 |
+| image_pre_path | string | 回灌数据集所在路径 | 无 |
+
 ## J5 Ubuntu系统上运行
 
-**使用本地图片回灌**
+**准备回灌数据集**
+
+```shell
+# 板端下载数据集
+wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_bev_data.tar.gz
+
+# 解压缩
+mkdir hobot_bev_data
+tar -zxvf hobot_bev_data.tar.gz -C hobot_bev_data
+
+# 解压完成后数据集在hobot_bev_data/data路径下
+```
+
+**使用本地数据集回灌**
 
 ```shell
 # 配置TogetheROS·Bot环境
 source /opt/tros/setup.bash
 
-ros2 launch hobot_bev hobot_bev.launch.py 
+# 启动运行脚本，并指定数据集路径
+ros2 launch hobot_bev hobot_bev.launch.py image_pre_path:=hobot_bev_data/data
 ```
 
-回灌完成后在运行路径下生成渲染图片`render_all.jpeg`：
+PC的WEB端输入板端IP地址`http://IP:8000`，展示回灌结果和实时渲染：
 
 ![image](./img/render_all.jpeg)
