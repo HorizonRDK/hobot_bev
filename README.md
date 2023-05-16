@@ -51,12 +51,6 @@ Getting Started with Hobot Bev Node
 
 ## 参数
 
-  this->declare_parameter<std::string>("config_file", config_file_);
-  this->declare_parameter<std::string>("model_file", model_file_);
-  this->declare_parameter<std::string>("pkg_path", pkg_path_);
-  this->declare_parameter<std::string>("image_pre_path", image_pre_path_);
-
-
 | 字段 | 类型 | 描述 | 默认值 |
 | ---- | ---- | ---- | ---- |
 | config_file | string | 配置文件路径 | "config/bev_ipm_base/bev_ipm_base_config.json" |
