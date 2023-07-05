@@ -67,7 +67,7 @@ Getting Started with Hobot Bev Node
 wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_bev_data.tar.gz
 
 # 解压缩
-mkdir hobot_bev_data
+mkdir -p hobot_bev_data
 tar -zxvf hobot_bev_data.tar.gz -C hobot_bev_data
 
 # 解压完成后数据集在hobot_bev_data/data路径下
