@@ -4,6 +4,10 @@ Getting Started with Hobot Bev Node
 
 # 功能介绍
 
+BEV感知算法使用地平线开源的BEV感知算法模型，以6组图像作为输入，利用BPU进行算法推理，发布渲染图片msg。
+
+模型使用的训练数据集为[Nuscenes](https://www.nuscenes.org/nuscenes)，输入的6组图像分别是前视，左前，右前，后视，左后，右后。模型输出10个类别的目标以及对应的3D检测框，包括障碍物、多种类型车辆、交通标志等，以及车道线、人行道、马路边缘的语义分割。
+
 
 # 开发环境
 
@@ -37,7 +41,7 @@ Getting Started with Hobot Bev Node
 
 1、编译环境确认
 
-- 在docker中编译，并且docker中已经编译好TROS·B。docker安装、交叉编译、TROS·B编译和部署说明详见[地平线机器人平台用户手册](https://developer.horizon.ai/api/v1/fileData/TogetherROS/quick_start/cross_compile.html#togetherros)。
+- 在docker中编译，并且docker中已经编译好TROS·B。docker安装、交叉编译、TROS·B编译和部署说明详见[TogetheROS.Bot用户手册](https://developer.horizon.ai/api/v1/fileData/documents_tros/quick_start/cross_compile.html#)。
 
 2、编译
 
