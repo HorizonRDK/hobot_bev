@@ -1,69 +1,29 @@
-Getting Started with Hobot Bev Node
-=======
-
-
 # 功能介绍
 
-BEV感知算法使用地平线开源的BEV感知算法模型，以6组图像作为输入，利用BPU进行算法推理，发布渲染图片msg。
+BEV感知算法是使用地平线[OpenExplorer](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/hat/source/examples/bev.html)在[nuscenes](https://www.nuscenes.org/nuscenes)数据集上训练出来的`BEV`多任务模型。
 
-模型使用的训练数据集为[Nuscenes](https://www.nuscenes.org/nuscenes)，输入的6组图像分别是前视，左前，右前，后视，左后，右后。模型输出10个类别的目标以及对应的3D检测框，包括障碍物、多种类型车辆、交通标志等，以及车道线、人行道、马路边缘的语义分割。
+算法输入为6组图像数据，分别是前视，左前，右前，后视，左后，右后图。模型输出为10个类别的目标以及对应的3D检测框，包括障碍物、多种类型车辆、交通标志等，以及车道线、人行道、马路边缘的语义分割。
+
+此示例使用本地图像数据作为输入，利用BPU进行算法推理，发布算法感知结果渲染的图片消息，在PC端浏览器上渲染显示算法结果。
+
+# 物料清单
 
 
-# 开发环境
+# 使用方法
 
-- 编程语言: C/C++
-- 开发平台: J5/X86
-- 系统版本：Ubuntu 20.0.4
-- 编译工具链:Linux GCC 9.3.0/Linaro GCC 9.3.0
+## 功能安装
 
-# 编译
+在RDK系统的终端中运行如下指令，即可快速安装：
 
-- J5版本：支持在J5 Ubuntu系统上编译和在PC上使用docker交叉编译。
+```bash
+sudo apt update
+sudo apt install -y tros-hobot-bev
+sudo apt install -y tros-websocket
+```
 
-## J5 Ubuntu系统上编译 J5版本
+## 准备回灌数据集
 
-1、编译环境确认
-
-- 板端已安装J5 Ubuntu系统。
-
-- 当前编译终端已设置TROS·B环境变量：`source /opt/tros/setup.bash`。
-
-- 已安装ROS2软件包构建系统ament_cmake。安装命令：`apt update; apt-get install python3-catkin-pkg; pip3 install empy`
-
-- 已安装ROS2编译工具colcon。安装命令：`pip3 install -U colcon-common-extensions`
-
-2、编译
-
-- 编译命令：`colcon build --packages-select hobot_bev`
-
-## docker交叉编译 J5版本
-
-1、编译环境确认
-
-- 在docker中编译，并且docker中已经编译好TROS·B。docker安装、交叉编译、TROS·B编译和部署说明详见[TogetheROS.Bot用户手册](https://developer.horizon.ai/api/v1/fileData/documents_tros/quick_start/cross_compile.html#)。
-
-2、编译
-
-- 编译命令：
-
-  ```shell
-  bash robot_dev_config/build.sh -p J5 -s hobot_bev
-  ```
-
-# 使用介绍
-
-## 参数
-
-| 字段 | 类型 | 描述 | 默认值 |
-| ---- | ---- | ---- | ---- |
-| config_file | string | 配置文件路径 | "config/bev_ipm_base/bev_ipm_base_config.json" |
-| model_file | string | 模型文件路径 | "config/model/model-c359f50c.hbm" |
-| pkg_path | string | pkg安装路径 | launch脚本中自动获取 |
-| image_pre_path | string | 回灌数据集所在路径 | 无 |
-
-## J5 Ubuntu系统上运行
-
-**准备回灌数据集**
+在RDK系统的终端中运行如下指令，下载并解压数据集：
 
 ```shell
 # 板端下载数据集
@@ -76,16 +36,36 @@ tar -zxvf hobot_bev_data.tar.gz -C hobot_bev_data
 # 解压完成后数据集在hobot_bev_data/data路径下
 ```
 
-**使用本地数据集回灌**
+## 启动算法和图像可视化
+
+在RDK系统的终端中运行如下指令，启动算法和可视化：
 
 ```shell
-# 配置TogetheROS·Bot环境
+# 配置tros.b环境
 source /opt/tros/setup.bash
 
 # 启动运行脚本，并指定数据集路径
 ros2 launch hobot_bev hobot_bev.launch.py image_pre_path:=hobot_bev_data/data
 ```
 
-PC的WEB端输入板端IP地址`http://IP:8000`，展示回灌结果和实时渲染：
+启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址，即可看到算法可视化的实时效果：
 
-![image](./img/render_all.jpeg)
+![bev](img/bev.gif)
+
+
+# 接口说明
+
+## 话题
+
+| 名称         | 消息类型                             | 说明                                     |
+| ------------ | ------------------------------------ | ---------------------------------------- |
+| /image_jpeg  | sensor_msgs/msg/Image                | 周期发布的图像话题，jpeg格式             |
+
+## 参数
+
+| 名称                         | 参数值                                          | 说明                                               |
+| ---------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| image_pre_path                 | 使用回灌数据集实际所在路径 | 回灌数据集路径                         |
+
+
+# 常见问题
