@@ -44,11 +44,14 @@ tar -zxvf hobot_bev_data.tar.gz -C hobot_bev_data
 # 配置tros.b环境
 source /opt/tros/setup.bash
 
+# 启动websocket服务
+ros2 launch websocket websocket_service.launch.py
+
 # 启动运行脚本，并指定数据集路径
 ros2 launch hobot_bev hobot_bev.launch.py image_pre_path:=hobot_bev_data/data
 ```
 
-启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址，即可看到算法可视化的实时效果：
+启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址http://IP:8000（IP为RDK的IP地址），即可看到算法可视化的实时效果：
 
 ![bev](img/bev.gif)
 
