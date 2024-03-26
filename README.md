@@ -50,7 +50,6 @@ source /opt/tros/setup.bash
 ros2 launch websocket websocket_service.launch.py
 
 # Start the execution script and specify the dataset path
-``````bash
 ros2 launch hobot_bev hobot_bev.launch.py image_pre_path:=hobot_bev_data/data
 ```
 
@@ -75,4 +74,3 @@ After successful launch, open a browser on the same network computer and visit t
 
 
 # FAQ
-```  
