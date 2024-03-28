@@ -202,11 +202,10 @@ void BevNode::RunSingleFeedInfer() {
   // keep camera parameter tensors
   // sp_preprocess_->FreeTensors(input_tensors);
 
-  std::vector<std::shared_ptr<hobot::dnn_node::OutputDescription>> output_descs{};
   auto dnn_output = std::make_shared<BevNodeOutput>();
   dnn_output->msg_header = std::make_shared<std_msgs::msg::Header>();
   dnn_output->image_files = sp_feedback_data->image_files;
-  if (Run(input_tensors, output_descs, dnn_output, true, -1, -1) < 0) {
+  if (Run(input_tensors, dnn_output, true, -1, -1) < 0) {
     RCLCPP_INFO(rclcpp::get_logger("bev_node"), "Run infer fail!");
   }
 }
@@ -285,11 +284,10 @@ void BevNode::RunBatchFeedInfer() {
     std::vector<std::shared_ptr<DNNTensor>> input_tensors;
     sp_preprocess_->CvtData2Tensors(input_tensors, model, sp_feedback_data);
 
-    std::vector<std::shared_ptr<hobot::dnn_node::OutputDescription>> output_descs{};
     auto dnn_output = std::make_shared<BevNodeOutput>();
     dnn_output->msg_header = std::make_shared<std_msgs::msg::Header>();
     dnn_output->image_files = sp_feedback_data->image_files;
-    if (Run(input_tensors, output_descs, dnn_output, false, -1, -1) < 0) {
+    if (Run(input_tensors, dnn_output, false, -1, -1) < 0) {
       RCLCPP_INFO(rclcpp::get_logger("bev_node"), "Run infer fail!");
     }
   }

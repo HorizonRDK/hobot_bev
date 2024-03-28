@@ -34,7 +34,6 @@ namespace hobot {
 namespace bev {
 
 using hobot::dnn_node::DNNInput;
-using hobot::dnn_node::DNNResult;
 using hobot::dnn_node::DNNTensor;
 using hobot::dnn_node::Model;
 using hobot::dnn_node::NV12PyramidInput;
@@ -66,15 +65,6 @@ class PreProcess {
   void FreeTensors(
       const std::vector<std::shared_ptr<DNNTensor>> &input_tensors);
 
-  std::shared_ptr<DNNTensor> GetNV12Pyramid(const std::string &image_file,
-                                            int scaled_img_height,
-                                            int scaled_img_width);
-  std::shared_ptr<DNNTensor> GetNV12Pyramid(const std::string &image_file,
-                                            int scaled_img_height,
-                                            int scaled_img_width,
-                                            int &original_img_height,
-                                            int &original_img_width);
-  int32_t BGRToNv12(cv::Mat &bgr_mat, cv::Mat &img_nv12);
   bool is_padding_{false};
   // test
   std::once_flag center_flag;
